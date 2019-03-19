@@ -1,12 +1,14 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <cmath>
 
 using namespace std;
 
 void run();
-void backprop();
+void backprop(double, double);
 void testCases();
+double errorAmount(int, int, double);
 
 //First we have to create the arrays for input, hidden, and output nodes
 int input[2];
@@ -33,31 +35,35 @@ int main(){
 	input[0] = 1;
 	input[1] = 1;
 
-	double da = 0.1;
-	double db = 0.1;
+	double da = 0.01;
+	double db = 0.01;
 
 	//Finding f(a)
 	run();
-	double out = output[0];
+	double out = errorAmount(input[0], input[1],output[0]);
 
 	//Finding f(a-da)
 	inToHidden[0][0] -= da;
 	run();
-	double daOut = output[0];
+	double daOut = errorAmount(input[0], input[1],output[0]);
 
 	//Finding dOut/da
-	double dOda = (out - daOut) / da;
-	cout << "dOut/da " << dOda << endl;
+	double dErrorda = (out - daOut) / da;
+	cout << "dError/da " << dErrorda << endl;
 
 	//Finding f(b-db)
 	inToHidden[0][1] -= db;
 
 	run();
 
-	double dbOut = output[0];
+	double dbOut = errorAmount(input[0], input[1],output[0]);
 
-	double dOdb = (out - dbOut) / db;
-	cout << "dOut/db " << dOdb << endl;
+	double dErrordb = (out - dbOut) / db;
+	cout << "dError/db " << dErrordb << endl;
+
+	backprop(dErrorda, dErrordb);
+
+	testCases();
 
 }
 
@@ -72,12 +78,21 @@ void run(){
 	output[0] = hidden[0] * hiddenToOut[0];
 }
 
-void backprop(){
-
+void backprop(double dErrorda, double dErrordb){
+	inToHidden[0][0] -= dErrorda;
+	inToHidden[0][1] -= dErrordb;
 }
 
+double errorAmount(int in1, int in2, double guess){
+	if (in1 == in2){
+		return abs(1 - guess);
+	}
+	return guess;
+}
+
+
 void testCases(){
-	cout << "Printing all combinations\n";
+	cout << endl << "Printing all combinations\n";
 	input[0] = 1;
 	input[1] = 1;
 	cout << "Trying: " << input[0] << " " << input[1] << endl;
