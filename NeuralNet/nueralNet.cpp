@@ -12,26 +12,39 @@ double errorAmount(int, int, double);
 
 //First we have to create the arrays for input, hidden, and output nodes
 int input[2];
+const int numInputs = 2;
 double hidden[1];
+const int numHidden = 1;
 double output[1];
+const int numOut = 1;
 
 double dErrorda;
 double dErrordb;
 
 //Need to also store weights
-//First is input nodes then to hidden
-double inToHidden[2][1];
-double hiddenToOut[1];
+//First is hidden -> inputs so you can multiply each element in the inputs by hidden weights
+double inToHidden[numHidden][numInputs];
+
+//First is hidden -> inputs so you can multiply each element in the inputs by hidden weights
+double hiddenToOut[numOut][numHidden];
 
 int main(){
 	srand(time(NULL));
 
 	cout << "Start:"<<endl;
 
-	//Set to random values
-	inToHidden[0][0] = rand()/((double) RAND_MAX);
-	inToHidden[1][0] = rand()/((double) RAND_MAX);
-	hiddenToOut[0] = rand()/((double) RAND_MAX);
+	//Setting weights to random values
+	for (int hid = 0; hid < numHidden; hid++){
+		for (int in = 0; in < numInputs; in++){
+			inToHidden[hid][in] = rand()/((double) RAND_MAX);
+		}
+	}
+
+	for (int out = 0; out < numOut; out++){
+		for (int hid = 0; hid < numHidden; hid++){
+			hiddenToOut[out][hid] = rand()/((double) RAND_MAX);
+		}
+	}
 
 	cout << "The total error is " << testCases() << endl << endl;
 
@@ -42,14 +55,22 @@ int main(){
 }
 
 void run(){
-	//Find weighted sum for the hidden node
-	double sum = 0;
-	for (int i = 0; i < 2; i++){
-		sum += input[i] * inToHidden[i][0];
+	//TODO Implement activation function
+	//Find weighted sum for the hidden nodes
+	for (int hid = 0; hid < numHidden; hid++){
+		hidden[hid] = 0;
+		for (int in = 0; in < numInputs; in++){
+			hidden[hid] += input[hid] * inToHidden[hid][in];
+		}
 	}
-	hidden[0] = sum;
 
-	output[0] = hidden[0] * hiddenToOut[0];
+	//Find weighted sum for the output nodes
+	for (int out = 0; out < numHidden; out++){
+		output[out] = 0;
+		for (int hid = 0; hid < numInputs; hid++){
+			output[out] += input[out] * inToHidden[out][hid];
+		}
+	}
 }
 void findErrorInCases(){
 	input[0] = 1;
