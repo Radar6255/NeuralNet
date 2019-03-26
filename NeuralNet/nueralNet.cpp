@@ -9,14 +9,17 @@ void run();
 void backprop(double, double);
 double testCases();
 double errorAmount(int, int, double);
+double activationFunc(double);
 
 //First we have to create the arrays for input, hidden, and output nodes
-int input[2];
 const int numInputs = 2;
-double hidden[1];
+int input[numInputs];
+
 const int numHidden = 1;
-double output[1];
+double hidden[numHidden];
+
 const int numOut = 1;
+double output[numOut];
 
 double dErrorda;
 double dErrordb;
@@ -25,7 +28,7 @@ double dErrordb;
 //First is hidden -> inputs so you can multiply each element in the inputs by hidden weights
 double inToHidden[numHidden][numInputs];
 
-//First is hidden -> inputs so you can multiply each element in the inputs by hidden weights
+//First is out -> inputs so you can multiply each element in the inputs by hidden weights
 double hiddenToOut[numOut][numHidden];
 
 int main(){
@@ -54,14 +57,19 @@ int main(){
 
 }
 
+double activationFunc(double val){
+	return 1.0/(1.0+exp(-val));
+}
+
 void run(){
-	//TODO Implement activation function
 	//Find weighted sum for the hidden nodes
 	for (int hid = 0; hid < numHidden; hid++){
 		hidden[hid] = 0;
 		for (int in = 0; in < numInputs; in++){
 			hidden[hid] += input[hid] * inToHidden[hid][in];
 		}
+		//Applying activation function
+		hidden[hid] = activationFunc(hidden[hid]);
 	}
 
 	//Find weighted sum for the output nodes
@@ -70,6 +78,7 @@ void run(){
 		for (int hid = 0; hid < numInputs; hid++){
 			output[out] += input[out] * inToHidden[out][hid];
 		}
+		output[out] = activationFunc(output[out]);
 	}
 }
 void findErrorInCases(){
