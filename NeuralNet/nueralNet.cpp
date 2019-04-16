@@ -17,12 +17,16 @@ void printArray(double[], int);
 void fileInput(char*);
 void backprop(char);
 
+
+
 //First we have to create the arrays for input, hidden, and output nodes
 const int numInputs = 5 * 27;
 int input[numInputs];
 
 const int numHidden = 10;
 double hidden[numHidden];
+
+//double hiddenNodes[][];
 
 const int numOut = 27;
 double output[numOut];
@@ -49,17 +53,21 @@ int main(){
 	fileIn.open("inputData.txt");
 
 	srand(time(NULL));
+//	srand(314159);
 
 	cout << "Start:"<<endl;
 
 	//Setting weights to random values
+	//Using He-et-al Initialization
 	for (int hid = 0; hid < numHidden; hid++){
 		for (int in = 0; in < numInputs; in++){
-			inToHidden[hid][in] = rand()/(2.5*(double) RAND_MAX);
+//			inToHidden[hid][in] = rand()/(2.5*(double) RAND_MAX);
+			inToHidden[hid][in] = ((double)(numInputs-numHidden)*(rand()/(double)RAND_MAX)+numInputs)*sqrt(2.0/numInputs);
 		}
 	}for (int out = 0; out < numOut; out++){
 		for (int hid = 0; hid < numHidden; hid++){
-			hiddenToOut[out][hid] = rand()/(2.5*(double) RAND_MAX);
+//			hiddenToOut[out][hid] = rand()/(2.5*(double) RAND_MAX);
+			hiddenToOut[out][hid] = ((double)(numHidden-numOut)*(rand()/(double)RAND_MAX)+numHidden)*sqrt(2.0/numHidden);
 		}
 	}
 
@@ -107,46 +115,10 @@ void run(){
 		output[out] = activationFunc(output[out]);
 	}
 }
-/**
-void findErrorInCases(){
-	input[0] = 1;
-	input[1] = 1;
-
-	double da = 0.01;
-	double db = 0.01;
-
-	//Finding f(a)
-	run();
-//	double out = errorAmount(input[0], input[1],output[0]);
-
-	//Finding f(a-da)
-	inToHidden[0][0] -= da;
-	run();
-	double daOut = errorAmount(input[0], input[1],output[0]);
-
-	//Finding dOut/da
-	dErrorda = (out - daOut) / da;
-	cout << "dError/da " << dErrorda << endl;
-	outputError[0][0] = dErrorda * derivativeOfActivation(output[0]);
-
-	//Finding f(b-db)
-	inToHidden[0][1] -= db;
-
-	run();
-
-	double dbOut = errorAmount(input[0], input[1],output[0]);
-
-	dErrordb = (out - dbOut) / db;
-	cout << "dError/db " << dErrordb << endl;
-	outputError[1][0] = dErrordb * derivativeOfActivation(output[0]);
-
-}
-*/
-//TODO Change when the goal changes
 void errorAmount(char expected){
 	for (int i = 0; i < numOut; i++){
 		if (i == expected-97){
-			outputError[i] = output[i]-1;
+			outputError[i] = 1-output[i];
 		}else{
 			outputError[i] = output[i];
 		}
@@ -193,7 +165,6 @@ void runCase(char chars[1+(numInputs/27)]){
 	}
 	setInputs(previous);
 	run();
-//	errorAmount(expected);
 	backprop(expected);
 }
 
@@ -228,7 +199,30 @@ void backprop(char expected){
 	for (int i = 0; i < numOut; i++){
 		runError += outputError[i];
 	}totalError += runError;
+	for (int hid = 0; hid < numHidden; hid++){
+			//Derivative of the activation function at the current output
+			double dAct = derivativeOfActivation(hidden[hid]);
+			for (int in = 0; in < numInputs; in++){
+				//dW is the change in the weight
+				double dW = 0.1;
+				inToHidden[hid][in] += dW;
+				run();
+				errorAmount(expected);
+				double changeError = 0;
+				for (int i = 0; i < numOut; i++){
+					changeError += outputError[i];
+				}
+				//dErrorDW is the change in error due to W
+				double dErrorDW = (changeError - runError) / dW;
+				//Change the weight back
+				inToHidden[hid][in] -= dW;
 
+				//Scaling factor
+				double changeScale = 0.01;
+				//Adjust the weight to decrease the error
+				inToHidden[hid][in] -= (dErrorDW * changeScale);
+			}
+		}
 	for (int out = 0; out < numOut; out++){
 		//Derivative of the activation function at the current output
 		double dAct = derivativeOfActivation(output[out]);
@@ -248,70 +242,10 @@ void backprop(char expected){
 			hiddenToOut[out][hid] -= dW;
 
 			//Scaling factor
-			double changeScale = 1;
+			double changeScale = 0.01;
 			//Adjust the weight to decrease the error
-			hiddenToOut[out][hid] -= (dErrorDW * changeScale * -dAct);
+			hiddenToOut[out][hid] -= (dErrorDW * changeScale);
 		}
 	}
-	for (int hid = 0; hid < numHidden; hid++){
-		//Derivative of the activation function at the current output
-		double dAct = derivativeOfActivation(hidden[hid]);
-		for (int in = 0; in < numInputs; in++){
-			//dW is the change in the weight
-			double dW = 0.1;
-			inToHidden[hid][in] += dW;
-			run();
-			errorAmount(expected);
-			double changeError = 0;
-			for (int i = 0; i < numOut; i++){
-				changeError += outputError[i];
-			}
-			//dErrorDW is the change in error due to W
-			double dErrorDW = (changeError - runError) / dW;
-			//Change the weight back
-			inToHidden[hid][in] -= dW;
 
-			//Scaling factor
-			double changeScale = 1;
-			//Adjust the weight to decrease the error
-			inToHidden[hid][in] -= (dErrorDW * changeScale * -dAct);
-		}
-	}
 }
-
-/*
-double testCases(){
-	//TODO Change tests
-	double errorSum = 0;
-
-	cout << endl << "Printing all combinations\n";
-	input[0] = 1;
-	input[1] = 1;
-	cout << "Trying: " << input[0] << " " << input[1] << endl;
-	run();
-	cout << output[0] << endl << endl;
-	errorSum += errorAmount(1,1,output[0]);
-
-	input[0] = 1;
-	input[1] = 0;
-	cout << "Trying: " << input[0] << " " << input[1] << endl;
-	run();
-	cout << output[0] << endl << endl;
-	errorSum += errorAmount(1,0,output[0]);
-
-	input[0] = 0;
-	input[1] = 1;
-	cout << "Trying: " << input[0] << " " << input[1] << endl;
-	run();
-	cout << output[0] << endl << endl;
-	errorSum += errorAmount(0,1,output[0]);
-
-	input[0] = 0;
-	input[1] = 0;
-	cout << "Trying: " << input[0] << " " << input[1] << endl;
-	run();
-	cout << output[0] << endl << endl;
-	errorSum += errorAmount(0,0,output[0]);
-
-	return errorSum;
-}*/
