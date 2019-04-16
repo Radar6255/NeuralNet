@@ -50,10 +50,11 @@ double hiddenToOut[numOut][numHidden];
 //Array to store which characters the network has
 char inputChars[(numInputs/27)+1];
 int main(){
-	fileIn.open("inputData.txt");
+	//TODO Change to use other input data
+	fileIn.open("hello.txt");
 
-	srand(time(NULL));
-//	srand(314159);
+//	srand(time(NULL));
+	srand(314159);
 
 	cout << "Start:"<<endl;
 
@@ -75,13 +76,17 @@ int main(){
 	for (int i = 0; i < (numInputs/27)+1; i++){
 		inputChars[i] = ' ';
 	}
-	while (fileIn.good()){
-		fileInput(inputChars);
-		runCase(inputChars);
-		numChars++;
-		cout << readOut();
-	}cout << "Total error for the run is " << totalError;
-
+	while(true){
+		while (fileIn.good()){
+			fileInput(inputChars);
+			runCase(inputChars);
+			numChars++;
+			cout << readOut();
+		}cout << "Total error for the run is " << totalError << endl;
+//		fileIn.seekg(0, ios::beg);
+		fileIn.close();
+		fileIn.open("hello.txt");
+	}
 //	cout << "The total error is " << testCases() << endl << endl;
 
 }
@@ -180,7 +185,7 @@ void fileInput(char* inputChars){
 			*(inputChars+(numInputs/27)) = tolower(temp);
 			break;
 		}if (temp == '\n'){
-			cout << totalError/numChars << endl;
+			cout << " " << totalError/numChars << endl;
 			numChars = 0;
 			totalError = 0;
 		}
@@ -197,7 +202,7 @@ void backprop(char expected){
 	errorAmount(expected);
 	double runError = 0;
 	for (int i = 0; i < numOut; i++){
-		runError += outputError[i];
+		runError += pow(outputError[i],2);
 	}totalError += runError;
 	for (int hid = 0; hid < numHidden; hid++){
 			//Derivative of the activation function at the current output
@@ -210,7 +215,7 @@ void backprop(char expected){
 				errorAmount(expected);
 				double changeError = 0;
 				for (int i = 0; i < numOut; i++){
-					changeError += outputError[i];
+					changeError += pow(outputError[i],2);
 				}
 				//dErrorDW is the change in error due to W
 				double dErrorDW = (changeError - runError) / dW;
